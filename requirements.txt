@@ -3,3 +3,4 @@ emoji
 matplotlib
 pandas
 requests
+gunicorn
