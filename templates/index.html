@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Chat Analyzer - IsItLove.ai</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #0f0f0f;
+      color: #f0f0f0;
+      padding: 40px;
+      text-align: center;
+    }
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 20px;
+      background: linear-gradient(to right, #00ffa6, #00ccff);
+      background-clip: text;
+      -webkit-background-clip: text;
+      color: transparent;
+      -webkit-text-fill-color: transparent;
+    }
+    input[type="file"] {
+      padding: 10px;
+      border-radius: 5px;
+      background: #222;
+      color: #eee;
+      border: 1px solid #444;
+      cursor: pointer;
+      margin-bottom: 20px;
+    }
+    button {
+      background: #00ffa6;
+      color: #000;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #00cc86;
+    }
+    .result {
+      margin-top: 30px;
+      text-align: left;
+      max-width: 700px;
+      margin-left: auto;
+      margin-right: auto;
+      background: #1c1c1c;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 20px #00ffa677;
+    }
+    .loading {
+      margin-top: 20px;
+      font-style: italic;
+      color: #888;
+    }
+    pre {
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+  </style>
+</head>
+<body>
+  <h1>💬 Chat Analyzer - IsItLove.ai</h1>
+  <form id="uploadForm">
+    <input type="file" name="chat_file" required /><br/>
+    <button type="submit">Analyze Chat</button>
+  </form>
+  <div class="loading" id="loading" style="display: none;">Analyzing chat... hang tight 😌</div>
+  <div class="result" id="result" style="display: none;"></div>
+
+  <script>
+    const form = document.getElementById('uploadForm');
+    const resultDiv = document.getElementById('result');
+    const loadingDiv = document.getElementById('loading');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      resultDiv.style.display = 'none';
+      loadingDiv.style.display = 'block';
+
+      const formData = new FormData(form);
+      const res = await fetch('/analyze', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await res.json();
+      loadingDiv.style.display = 'none';
+
+      if (data.error) {
+        resultDiv.innerHTML = `<p style="color: red;">${data.error}</p>`;
+      } else {
+        let senderStats = Object.entries(data.messages_per_sender)
+          .map(([sender, count]) => `<li><strong>${sender}:</strong> ${count} messages</li>`)
+          .join("");
+
+        let topWords = data.top_5_words.map(([word, count]) => `<li>${word} (${count})</li>`).join("");
+
+        let topWordsBySender = Object.entries(data.top_5_words_by_sender)
+          .map(([sender, words]) => {
+            let list = words.map(([w, c]) => `${w} (${c})`).join(", ");
+            return `<li><strong>${sender}:</strong> ${list}</li>`;
+          }).join("");
+
+        let emojisBySender = Object.entries(data.emojis_by_sender)
+          .map(([sender, emojis]) => {
+            let list = emojis.map(([emoji, count]) => `${emoji} (${count})`).join(" ");
+            return `<li><strong>${sender}:</strong> ${list}</li>`;
+          }).join("");
+
+        let responseTimes = Object.entries(data.avg_response_time)
+          .map(([sender, sec]) => {
+            const mins = Math.floor(sec / 60);
+            const secs = sec % 60;
+            return `<li><strong>${sender}:</strong> ${mins}m ${secs}s</li>`;
+          }).join("");
+
+        resultDiv.innerHTML = `
+          <h3>🔍 Analysis Result</h3>
+          <p><strong>Total Messages:</strong> ${data.total_messages}</p>
+          <ul>${senderStats}</ul>
+          <p><strong>🗨️ Top 5 Words:</strong></p>
+          <ul>${topWords}</ul>
+          <p><strong>🧑‍🤝‍🧑 Top 5 Words by Sender:</strong></p>
+          <ul>${topWordsBySender}</ul>
+          <p><strong>😍 Most Used Emojis:</strong></p>
+          <ul>${emojisBySender}</ul>
+          <p><strong>⏱️ Average Response Time:</strong></p>
+          <ul>${responseTimes}</ul>
+          <p><strong>💌 Gemini Analysis:</strong></p>
+          <div style="border-left: 4px solid #00ffa6; padding-left: 10px; font-style: italic;">${data.gemini}</div>
+        `;
+
+        resultDiv.style.display = 'block';
+      }
+    });
+  </script>
+</body>
+</html>

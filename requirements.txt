@@ -1,0 +1,5 @@
+Flask
+emoji
+matplotlib
+pandas
+requests
