@@ -18,7 +18,8 @@ import base64
 import tempfile
 
 app = Flask(__name__)
-GEMINI_API_KEY = os.getenv("AIzaSyAX3Ga8cHrzx65OC4z_0NYyrt6d5ut9nYc")
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+
 
 stopwords = set([
     "i", "me", "my", "myself", "we", "our", "ours", "ourselves", "you",
